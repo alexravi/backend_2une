@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id                  String                @id @default(uuid())
+  email               String                @unique
+  passwordHash        String
+  fullName            String
+  profilePhoto        String?
+  // Professional Identity
+  linkedInUrl         String?
+  phone               String?
+  // Basic Information
+  city                String?
+  state               String?
+  country             String                @default("India")
+  studentStatus       StudentStatus?
+  // Relations
+  educations          Education[]
+  workExperiences     WorkExperience[]
+  aiExperiences       AiExperience[]
+  domainExpertises    String                @default("[]") // Stored as JSON string array
+  languageProficiencies LanguageProficiency[]
+  // Availability
+  weeklyAvailability  WeeklyAvailability?
+  preferredWorkWindow PreferredWorkWindow?
+  // Compliance
+  agreedToTerms       Boolean               @default(false)
+  
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+}
+
+model Education {
+  id              String   @id @default(uuid())
+  institutionName String
+  degree          String   // e.g. "B.Tech", "MBA"
+  fieldOfStudy    String
+  startYear       Int
+  endYear         Int?     // null means 'Currently Studying'
+  description     String?
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model WorkExperience {
+  id               String         @id @default(uuid())
+  jobTitle         String
+  organizationName String
+  employmentType   EmploymentType
+  startMonth       Int
+  startYear        Int
+  endMonth         Int?
+  endYear          Int?           // null means 'Currently Working'
+  description      String?
+  userId           String
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AiExperience {
+  id               String         @id @default(uuid())
+  hasExperience    Boolean        @default(false)
+  platformName     String?
+  taskTypes        String         @default("[]") // Stored as JSON string array of AiTaskType
+  durationMonths   Int?
+  toolsUsed        String?
+  userId           String
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model LanguageProficiency {
+  id           String       @id @default(uuid())
+  languageName String
+  readingLevel ReadingLevel
+  writingLevel WritingLevel
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum StudentStatus {
+  STUDENT
+  WORKING_PROFESSIONAL
+  FREELANCER
+  OTHER
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  INTERNSHIP
+  FREELANCE
+  CONTRACT
+}
+
+enum ReadingLevel {
+  BASIC
+  INTERMEDIATE
+  ADVANCED
+  NATIVE_FLUENT
+}
+
+enum WritingLevel {
+  BASIC
+  INTERMEDIATE
+  ADVANCED
+  NATIVE_FLUENT
+}
+
+enum WeeklyAvailability {
+  HOURS_3_TO_5
+  HOURS_5_TO_10
+  HOURS_10_PLUS
+}
+
+enum PreferredWorkWindow {
+  WEEKDAYS
+  WEEKENDS
+  FLEXIBLE
+}
