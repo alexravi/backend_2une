@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addLanguageSchema = exports.addAiExperienceSchema = exports.addExperienceSchema = exports.addEducationSchema = exports.updateProfileSchema = void 0;
+exports.onboardUserSchema = exports.addLanguageSchema = exports.addAiExperienceSchema = exports.addExperienceSchema = exports.addEducationSchema = exports.updateProfileSchema = void 0;
 const zod_1 = require("zod");
 const client_1 = require("@prisma/client");
 exports.updateProfileSchema = zod_1.z.object({
@@ -46,4 +46,10 @@ exports.addLanguageSchema = zod_1.z.object({
     languageName: zod_1.z.string().min(2),
     readingLevel: zod_1.z.nativeEnum(client_1.ReadingLevel),
     writingLevel: zod_1.z.nativeEnum(client_1.WritingLevel),
+});
+exports.onboardUserSchema = exports.updateProfileSchema.extend({
+    educations: zod_1.z.array(exports.addEducationSchema).optional(),
+    workExperiences: zod_1.z.array(exports.addExperienceSchema).optional(),
+    aiExperiences: zod_1.z.array(exports.addAiExperienceSchema).optional(),
+    languageProficiencies: zod_1.z.array(exports.addLanguageSchema).optional(),
 });

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addLanguage = exports.addAiExperience = exports.addWorkExperience = exports.addEducation = exports.updateProfile = exports.getProfile = void 0;
+exports.onboardUser = exports.updateProfile = exports.getProfile = void 0;
 const db_1 = require("../services/db");
 const user_validator_1 = require("../validators/user.validator");
 const getProfile = async (req, res, next) => {
@@ -58,76 +58,78 @@ const updateProfile = async (req, res, next) => {
     }
 };
 exports.updateProfile = updateProfile;
-const addEducation = async (req, res, next) => {
+const onboardUser = async (req, res, next) => {
     try {
         const userId = req.user.userId;
-        const data = user_validator_1.addEducationSchema.parse(req.body);
-        const education = await db_1.prisma.education.create({
-            data: {
-                ...data,
-                userId
-            }
-        });
-        res.status(201).json(education);
-    }
-    catch (error) {
-        next(error);
-    }
-};
-exports.addEducation = addEducation;
-const addWorkExperience = async (req, res, next) => {
-    try {
-        const userId = req.user.userId;
-        const data = user_validator_1.addExperienceSchema.parse(req.body);
-        const experience = await db_1.prisma.workExperience.create({
-            data: {
-                ...data,
-                userId
-            }
-        });
-        res.status(201).json(experience);
-    }
-    catch (error) {
-        next(error);
-    }
-};
-exports.addWorkExperience = addWorkExperience;
-const addAiExperience = async (req, res, next) => {
-    try {
-        const userId = req.user.userId;
-        const data = user_validator_1.addAiExperienceSchema.parse(req.body);
-        const createData = { ...data, userId };
-        if (data.taskTypes) {
-            createData.taskTypes = JSON.stringify(data.taskTypes);
+        const data = user_validator_1.onboardUserSchema.parse(req.body);
+        const updateData = { ...data };
+        delete updateData.educations;
+        delete updateData.workExperiences;
+        delete updateData.aiExperiences;
+        delete updateData.languageProficiencies;
+        if (data.domainExpertises) {
+            updateData.domainExpertises = JSON.stringify(data.domainExpertises);
         }
-        const aiExp = await db_1.prisma.aiExperience.create({
-            data: createData
-        });
-        const formattedAiExp = {
-            ...aiExp,
-            taskTypes: JSON.parse(aiExp.taskTypes || '[]')
-        };
-        res.status(201).json(formattedAiExp);
-    }
-    catch (error) {
-        next(error);
-    }
-};
-exports.addAiExperience = addAiExperience;
-const addLanguage = async (req, res, next) => {
-    try {
-        const userId = req.user.userId;
-        const data = user_validator_1.addLanguageSchema.parse(req.body);
-        const language = await db_1.prisma.languageProficiency.create({
-            data: {
-                ...data,
-                userId
+        const result = await db_1.prisma.$transaction(async (tx) => {
+            // 1. Update primitive profile data fields
+            const user = await tx.user.update({
+                where: { id: userId },
+                data: updateData
+            });
+            // 2. Safely Clear Out Existing Lists to Replace with Incoming Data
+            await tx.education.deleteMany({ where: { userId } });
+            await tx.workExperience.deleteMany({ where: { userId } });
+            await tx.aiExperience.deleteMany({ where: { userId } });
+            await tx.languageProficiency.deleteMany({ where: { userId } });
+            // 3. Insert New Nested Records
+            if (data.educations && data.educations.length > 0) {
+                await tx.education.createMany({
+                    data: data.educations.map((edu) => ({ ...edu, userId }))
+                });
             }
+            if (data.workExperiences && data.workExperiences.length > 0) {
+                await tx.workExperience.createMany({
+                    data: data.workExperiences.map((exp) => ({ ...exp, userId }))
+                });
+            }
+            if (data.aiExperiences && data.aiExperiences.length > 0) {
+                await tx.aiExperience.createMany({
+                    data: data.aiExperiences.map((exp) => ({
+                        ...exp,
+                        userId,
+                        taskTypes: exp.taskTypes ? JSON.stringify(exp.taskTypes) : '[]'
+                    }))
+                });
+            }
+            if (data.languageProficiencies && data.languageProficiencies.length > 0) {
+                await tx.languageProficiency.createMany({
+                    data: data.languageProficiencies.map((lang) => ({ ...lang, userId }))
+                });
+            }
+            // 4. Return Full Updated Profile
+            return await tx.user.findUnique({
+                where: { id: userId },
+                include: {
+                    educations: true,
+                    workExperiences: true,
+                    aiExperiences: true,
+                    languageProficiencies: true
+                }
+            });
         });
-        res.status(201).json(language);
+        // Format raw string back to JSON Array
+        const formattedUser = {
+            ...result,
+            domainExpertises: JSON.parse(result.domainExpertises || '[]'),
+            aiExperiences: result.aiExperiences.map(aiExp => ({
+                ...aiExp,
+                taskTypes: JSON.parse(aiExp.taskTypes || '[]')
+            }))
+        };
+        res.status(200).json({ message: 'User Onboarded Successfully', profile: formattedUser });
     }
     catch (error) {
         next(error);
     }
 };
-exports.addLanguage = addLanguage;
+exports.onboardUser = onboardUser;

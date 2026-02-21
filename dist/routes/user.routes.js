@@ -80,9 +80,9 @@ router.get('/profile', user_controller_1.getProfile);
 router.put('/profile', user_controller_1.updateProfile);
 /**
  * @swagger
- * /api/user/education:
+ * /api/user/onboard:
  *   post:
- *     summary: Add an education entry for the user
+ *     summary: Bulk onboard the user with full multi-nested profile payload
  *     tags: [User Profile]
  *     security:
  *       - bearerAuth: []
@@ -92,123 +92,110 @@ router.put('/profile', user_controller_1.updateProfile);
  *         application/json:
  *           schema:
  *             type: object
- *             required: [institutionName, degree, fieldOfStudy, startYear]
  *             properties:
- *               institutionName:
+ *               fullName:
  *                 type: string
- *               degree:
+ *               phone:
  *                 type: string
- *               fieldOfStudy:
+ *               linkedInUrl:
  *                 type: string
- *               startYear:
- *                 type: integer
- *               endYear:
- *                 type: integer
- *               description:
+ *               city:
  *                 type: string
- *     responses:
- *       201:
- *         description: Education added successfully
- */
-router.post('/education', user_controller_1.addEducation);
-/**
- * @swagger
- * /api/user/experience:
- *   post:
- *     summary: Add an employment / experience entry for the user
- *     tags: [User Profile]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [jobTitle, organizationName, employmentType, startMonth, startYear]
- *             properties:
- *               jobTitle:
+ *               state:
  *                 type: string
- *               organizationName:
+ *               country:
  *                 type: string
- *               employmentType:
+ *               studentStatus:
  *                 type: string
- *                 enum: [FULL_TIME, PART_TIME, INTERNSHIP, FREELANCE, CONTRACT]
- *               startMonth:
- *                 type: integer
- *               startYear:
- *                 type: integer
- *               endMonth:
- *                 type: integer
- *               endYear:
- *                 type: integer
- *               description:
- *                 type: string
- *     responses:
- *       201:
- *         description: Experience added successfully
- */
-router.post('/experience', user_controller_1.addWorkExperience);
-/**
- * @swagger
- * /api/user/ai-experience:
- *   post:
- *     summary: Add AI Annotation specific expertise
- *     tags: [User Profile]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [hasExperience]
- *             properties:
- *               hasExperience:
- *                 type: boolean
- *               platformName:
- *                 type: string
- *               taskTypes:
+ *                 enum: [STUDENT, WORKING_PROFESSIONAL, FREELANCER, OTHER]
+ *               domainExpertises:
  *                 type: array
  *                 items:
  *                   type: string
- *               durationMonths:
- *                 type: integer
- *               toolsUsed:
+ *               weeklyAvailability:
  *                 type: string
+ *                 enum: [HOURS_3_TO_5, HOURS_5_TO_10, HOURS_10_PLUS]
+ *               preferredWorkWindow:
+ *                 type: string
+ *                 enum: [WEEKDAYS, WEEKENDS, FLEXIBLE]
+ *               educations:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required: [institutionName, degree, fieldOfStudy, startYear]
+ *                   properties:
+ *                     institutionName:
+ *                       type: string
+ *                     degree:
+ *                       type: string
+ *                     fieldOfStudy:
+ *                       type: string
+ *                     startYear:
+ *                       type: integer
+ *                     endYear:
+ *                       type: integer
+ *                     description:
+ *                       type: string
+ *               workExperiences:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required: [jobTitle, organizationName, employmentType, startMonth, startYear]
+ *                   properties:
+ *                     jobTitle:
+ *                       type: string
+ *                     organizationName:
+ *                       type: string
+ *                     employmentType:
+ *                       type: string
+ *                       enum: [FULL_TIME, PART_TIME, INTERNSHIP, FREELANCE, CONTRACT]
+ *                     startMonth:
+ *                       type: integer
+ *                     startYear:
+ *                       type: integer
+ *                     endMonth:
+ *                       type: integer
+ *                     endYear:
+ *                       type: integer
+ *                     description:
+ *                       type: string
+ *               aiExperiences:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required: [hasExperience]
+ *                   properties:
+ *                     hasExperience:
+ *                       type: boolean
+ *                     platformName:
+ *                       type: string
+ *                     taskTypes:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     durationMonths:
+ *                       type: integer
+ *                     toolsUsed:
+ *                       type: string
+ *               languageProficiencies:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required: [languageName, readingLevel, writingLevel]
+ *                   properties:
+ *                     languageName:
+ *                       type: string
+ *                     readingLevel:
+ *                       type: string
+ *                       enum: [BASIC, INTERMEDIATE, ADVANCED, NATIVE_FLUENT]
+ *                     writingLevel:
+ *                       type: string
+ *                       enum: [BASIC, INTERMEDIATE, ADVANCED, NATIVE_FLUENT]
  *     responses:
- *       201:
- *         description: AI Experience added successfully
+ *       200:
+ *         description: Entire nested profile successfully onboarded via transaction
+ *       400:
+ *         description: Request payload mismatch
  */
-router.post('/ai-experience', user_controller_1.addAiExperience);
-/**
- * @swagger
- * /api/user/language:
- *   post:
- *     summary: Add language reading and writing proficiencies
- *     tags: [User Profile]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [languageName, readingLevel, writingLevel]
- *             properties:
- *               languageName:
- *                 type: string
- *               readingLevel:
- *                 type: string
- *                 enum: [BASIC, INTERMEDIATE, ADVANCED, NATIVE_FLUENT]
- *               writingLevel:
- *                 type: string
- *                 enum: [BASIC, INTERMEDIATE, ADVANCED, NATIVE_FLUENT]
- *     responses:
- *       201:
- *         description: Language added successfully
- */
-router.post('/language', user_controller_1.addLanguage);
+router.post('/onboard', user_controller_1.onboardUser);
 exports.default = router;
