@@ -1,8 +1,15 @@
 import { Router } from 'express';
 import {
-    getProfile, updateProfile, onboardUser
+    getProfile, updateProfile, onboardUser,
+    patchProfilePersonal, patchProfileLinks, patchProfileExperience, patchProfileEducation,
+    patchProfileProjects, patchProfileCertifications, patchProfileSkills, patchProfileLanguages,
+    patchProfileLocation, patchProfileAvailability, patchProfileWorkPreferences,
+    patchProfileCommunications, patchProfileAccount
 } from '../controllers/user.controller';
+import { getUserStepCompletions, completeStep } from '../controllers/application.controller';
+import { uploadResume, uploadAvatar } from '../controllers/upload.controller';
 import { authenticateToken } from '../middlewares/auth';
+import { uploadResumeMiddleware, uploadAvatarMiddleware } from '../middlewares/upload';
 
 const router = Router();
 
@@ -83,6 +90,21 @@ router.get('/profile', getProfile);
  *         description: Validation payload error
  */
 router.put('/profile', updateProfile);
+
+/** Section-specific PATCH (auto-save, small payloads) */
+router.patch('/profile/personal', patchProfilePersonal);
+router.patch('/profile/links', patchProfileLinks);
+router.patch('/profile/experience', patchProfileExperience);
+router.patch('/profile/education', patchProfileEducation);
+router.patch('/profile/projects', patchProfileProjects);
+router.patch('/profile/certifications', patchProfileCertifications);
+router.patch('/profile/skills', patchProfileSkills);
+router.patch('/profile/languages', patchProfileLanguages);
+router.patch('/profile/location', patchProfileLocation);
+router.patch('/profile/availability', patchProfileAvailability);
+router.patch('/profile/work-preferences', patchProfileWorkPreferences);
+router.patch('/profile/communications', patchProfileCommunications);
+router.patch('/profile/account', patchProfileAccount);
 
 /**
  * @swagger
@@ -204,5 +226,91 @@ router.put('/profile', updateProfile);
  *         description: Request payload mismatch
  */
 router.post('/onboard', onboardUser);
+
+/**
+ * @swagger
+ * /api/user/application-steps:
+ *   get:
+ *     summary: Get all application step completions for the current user
+ *     description: Returns step completions that are reused across opportunities (e.g. resume, intro, work auth).
+ *     tags: [User Profile]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of user step completions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       stepId: { type: string }
+ *                       stepName: { type: string }
+ *                       stepType: { type: string }
+ *                       status: { type: string, enum: [PENDING, UPLOADED, COMPLETED] }
+ *                       completedAt: { type: string, format: date-time, nullable: true }
+ *                       metadata: { type: object, nullable: true }
+ *       401:
+ *         description: Access token missing or invalid
+ */
+router.get('/application-steps', getUserStepCompletions);
+
+/**
+ * @swagger
+ * /api/user/application-steps/{stepId}:
+ *   put:
+ *     summary: Complete (or update) an application step
+ *     description: Mark a step as UPLOADED or COMPLETED. Completions are reused across all opportunities.
+ *     tags: [User Profile]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: stepId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Application step ID (e.g. step-resume, step-personal-intro, step-work-auth)
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [UPLOADED, COMPLETED]
+ *                 description: Defaults to COMPLETED if omitted
+ *               metadata:
+ *                 type: object
+ *                 description: Optional JSON (e.g. file URL for resume upload)
+ *     responses:
+ *       200:
+ *         description: Updated or created step completion
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id: { type: string }
+ *                 userId: { type: string }
+ *                 applicationStepId: { type: string }
+ *                 status: { type: string, enum: [PENDING, UPLOADED, COMPLETED] }
+ *                 completedAt: { type: string, format: date-time, nullable: true }
+ *                 metadata: { type: string, nullable: true }
+ *       401:
+ *         description: Access token missing or invalid
+ *       404:
+ *         description: Application step not found
+ */
+router.put('/application-steps/:stepId', completeStep);
+
+router.post('/resume-upload', uploadResumeMiddleware, uploadResume);
+router.post('/avatar-upload', uploadAvatarMiddleware, uploadAvatar);
 
 export default router;
