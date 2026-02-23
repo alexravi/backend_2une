@@ -28,7 +28,7 @@ jobs:
         run: npm run build --if-present
 
       - name: Zip artifact for deployment
-        run: zip -r release.zip . --exclude "*.git*" --exclude "node_modules/*"
+        run: zip -r release.zip . --exclude "*.git*" --exclude "node_modules/.cache/*"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -62,3 +62,4 @@ jobs:
           app-name: 'backend2une'
           slot-name: 'Production'
           package: release.zip
+
