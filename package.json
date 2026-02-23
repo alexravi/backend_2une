@@ -7,7 +7,7 @@
     "dev": "ts-node src/index.ts",
     "postinstall": "prisma generate",
     "build": "tsc && prisma generate",
-    "start": "node dist/index.js",
+    "start": "node node_modules/prisma/build/index.js generate && node dist/index.js",
     "db:seed": "ts-node prisma/seed.ts"
   },
   "keywords": [],
