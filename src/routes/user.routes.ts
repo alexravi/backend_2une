@@ -4,7 +4,7 @@ import {
     patchProfilePersonal, patchProfileLinks, patchProfileExperience, patchProfileEducation,
     patchProfileProjects, patchProfileCertifications, patchProfileSkills, patchProfileLanguages,
     patchProfileLocation, patchProfileAvailability, patchProfileWorkPreferences,
-    patchProfileCommunications, patchProfileAccount
+    patchProfileCommunications, patchProfileAccount, submitProfile
 } from '../controllers/user.controller';
 import { getUserStepCompletions, completeStep } from '../controllers/application.controller';
 import { uploadResume, uploadAvatar } from '../controllers/upload.controller';
@@ -105,6 +105,8 @@ router.patch('/profile/availability', patchProfileAvailability);
 router.patch('/profile/work-preferences', patchProfileWorkPreferences);
 router.patch('/profile/communications', patchProfileCommunications);
 router.patch('/profile/account', patchProfileAccount);
+
+router.post('/profile/submit', submitProfile);
 
 /**
  * @swagger

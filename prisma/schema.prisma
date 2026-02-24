@@ -13,6 +13,8 @@ model User {
   passwordHash        String
   fullName            String
   profilePhoto        String?
+  profileCompleted    Boolean               @default(false)
+  profileVerified     Boolean               @default(false)
   // Professional Identity
   linkedInUrl         String?
   phone               String?
