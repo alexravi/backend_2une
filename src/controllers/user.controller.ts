@@ -309,6 +309,19 @@ export const onboardUser = async (req: Request, res: Response, next: NextFunctio
     }
 };
 
+export const submitProfile = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user!.userId;
+        const user = await prisma.user.update({
+            where: { id: userId },
+            data: { profileCompleted: true }
+        });
+        const profile = await getFormattedProfile(userId);
+        if (!profile) return res.status(404).json({ error: 'User not found' });
+        res.status(200).json(profile);
+    } catch (error) { next(error); }
+};
+
 /** Section-specific PATCH handlers (auto-save, small payloads) */
 const urlFields = ['personalWebsite', 'githubUrl', 'portfolioUrl', 'twitterUrl', 'facebookUrl', 'instagramUrl'] as const;
 function normalizeUrlFields(data: Record<string, unknown>) {
